@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:cache="http://www.springframework.org/schema/cache"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/mvc
+                           http://www.springframework.org/schema/mvc/spring-mvc.xsd
+                           http://www.springframework.org/schema/util
+                           http://www.springframework.org/schema/util/spring-util.xsd
+                           ">
+
+    <!-- Handles configuring the bean factory to handle auto-wiring some default Learn types like Loaders, services and extensions. -->
+    <bean id="customAutowireBeanFactoryProcessor"
+          class="blackboard.platform.spring.beans.CustomAutowireBeanFactoryProcessor"/>
+
+    <!-- Tells Spring that we're using annotations on our classes. -->
+    <context:annotation-config/>
+
+    <!-- Include the default set of argument resolvers to handle Id objects, standard Learn types like User and Context values. -->
+    <mvc:annotation-driven>
+        <mvc:argument-resolvers>
+            <bean class="blackboard.platform.spring.web.resolvers.DefaultArgumentResolver"/>
+        </mvc:argument-resolvers>
+    </mvc:annotation-driven>
+
+    <!-- Tells Spring to scan the classpath for component annotations so it can build the references. -->
+    <context:component-scan
+            base-package="blackboard.platform.spring, khkh.bblearn.b2.testbed"/>
+
+    <!-- Basic resolver for mapping to the proper JSPs -->
+    <bean id="primaryViewResolver"
+          class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass"
+                  value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/jsp/"/>
+        <property name="suffix" value=".jsp"/>
+        <property name="order" value="2"/>
+        <property name="contentType" value="text/html; charset=UTF-8"/>
+    </bean>
+
+    <!-- Include the default set of interceptors to handle XSRF, bundle management and user authorization. -->
+    <mvc:interceptors>
+        <bean class="blackboard.platform.spring.web.interceptors.DefaultInterceptor"/>
+    </mvc:interceptors>
+
+    <!-- Handle exceptions generically -->
+    <bean id="genericExceptionResolver"
+          class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+        <property name="exceptionMappings">
+            <props>
+                <prop key="java.lang.Exception">error</prop>
+            </props>
+        </property>
+        <property name="exceptionAttribute" value="exceptionObj"/>
+    </bean>
+
+
+    <bean id="localeResolver"
+          class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
+        <property name="defaultLocale" value="en_GB"/>
+    </bean>
+
+    <!-- These value must be the same as defined under ../WEB-INF/bb-mainfest.xml for the following reasons -->
+    <!-- * Avoid hard-coding the vendor and handler within source code -->
+    <!-- * BbResourceBundle requests this information which means we can't use the bundles/bb-mainfest-en_GB.properties to specify such information -->
+    <!-- * Spring MessageSource only works with file name ended with _en_GB by not -en_GB, so bundles/bb-mainfest-en_GB.properties aren't read -->
+
+    <!--Using ENUM value as key-->
+    <util:map id="b2ConfigMap" map-class="java.util.HashMap" key-type="khkh.bblearn.b2.testbed.enums.B2Enum">
+        <entry key="VENDOR" value="khkh"/>
+        <entry key="HANDLE" value="testbed"/>
+    </util:map>
+
+    <!-- Spring Security-->
+    <import resource="spring-security.xml"/>
+
+    <!-- Testbed Data feeds -->
+    <import resource="spring-feeds.xml"/>
+</beans>

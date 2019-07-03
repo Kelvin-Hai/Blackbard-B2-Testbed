@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util
+                           http://www.springframework.org/schema/util/spring-util.xsd
+                           ">
+
+    <util:map id="feedConfgMap" map-class="java.util.HashMap" key-type="khkh.bblearn.b2.testbed.enums.FeedEnum">
+        <entry key="DELIMITER" value="|"/>
+    </util:map>
+
+
+    <!--Using ENUM value as key-->
+    <util:map id="feedFilePathMap" map-class="java.util.HashMap" key-type="khkh.bblearn.b2.testbed.enums.FeedEnum">
+        <!-- The DSK and SIS feeds must be created to allow other feeds work properly-->
+        <entry key="DSK" value="/WEB-INF/feeds/dsk.feed"/>
+        <!-- The DSK feed must be processed prior to the SIS feed -->
+        <entry key="SIS" value="WEB-INF/feeds/sis.feed"/>
+
+        <entry key="USER" value="/WEB-INF/feeds/user.feed"/>
+        <entry key="COURSE" value="/WEB-INF/feeds/course.feed"/>
+        <entry key="COURSE_ENROLMENT" value="/WEB-INF/feeds/course_enrolment.feed"/>
+        <entry key="ORGANISATION" value="/WEB-INF/feeds/organisation.feed"/>
+        <entry key="ORGANISATION_ENROLMENT" value="/WEB-INF/feeds/organisation_enrolment.feed"/>
+    </util:map>
+
+
+    <util:map id="sisFeedDefaultSettingMap" map-class="java.util.HashMap"
+              key-type="khkh.bblearn.b2.testbed.enums.SISEnum">
+        <!-- default SIS to be used to create users,courses,enrolments etc -->
+        <!-- the value must be defined in the above feed, sis.feed, file -->
+        <entry key="DEFAULT_INTEGRATION" value="KHKH-Testbed-SIS1"/>
+
+        <!-- A single character, personally the pipe character seems to work the best-->
+        <!-- This value will be used for all user, courses, etc feeds -->
+        <entry key="DELIMITER" value="|"/>
+
+        <!-- default DataSourceBatchUid to be used to create users,courses,enrolments etc -->
+        <!-- the value must be either defined in the above feed, dsk.feed, file or an existing one in Bb Learn-->
+        <entry key="DATA_SOURCE_BATCH_UID" value="KHKH-Testbed-DSK1"/>
+
+        <!-- Only bb-flatfile type hundler is currently support -->
+        <entry key="INTEGRATION_HANDLER_TYPE" value="bb-flatfile"/>
+
+        <!-- blackboard.platform.dataintegration.DataIntegration.IntegrationState -->
+        <!-- Only use one the enum values of the above class-->
+        <!-- Accepted values: ACTIVE, INACTIVE and LOG_ONLY -->
+        <entry key="INTEGRATION_STATE" value="ACTIVE"/>
+
+        <!-- blackboard.platform.dataintegration.LogLevel -->
+        <!-- Only use one the enum values of the above class-->
+        <!-- Accepted values: ERROR, DEBUG, INFORMATION and WARNING -->
+        <entry key="INTEGRATION_LOG_LEVEL" value="ERROR"/>
+    </util:map>
+</beans>

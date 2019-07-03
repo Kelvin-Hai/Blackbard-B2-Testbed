@@ -1,0 +1,105 @@
+group 'UoY'
+version getB2Version()
+
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: "maven"
+
+sourceCompatibility = 1.8
+
+project.ext {
+    learnVersion = "3100.0.0-rel.107"
+    springVersion = "5.0.9.RELEASE"
+    hibernateVersion = "5.3.7.Final"
+}
+
+//def logbackVersion      = '1.0.13'
+//def logbackClassic      = "ch.qos.logback:logback-classic:${logbackVersion}"
+//def logbackCore         =  "ch.qos.logback:logback-core:${logbackVersion}"
+//
+def slf4jVersion = '1.7.25'
+def slf4jAPI     = "org.slf4j:slf4j-api:${slf4jVersion}"
+//def slf4jJCL     = "org.slf4j:jcl-over-slf4j:${slf4jVersion}"
+//def slf4jLog4J   = "org.slf4j:slf4j-log4j12:${slf4jVersion}"
+
+
+String getB2Version() {
+    File mfFile = new File(file("src/main/webapp"), 'WEB-INF/bb-manifest.xml');
+    def manifest = new XmlSlurper().parse(mfFile);
+    return manifest.plugin.version['@value'];
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://maven.blackboard.com/content/repositories/releases/"
+    }
+}
+
+configurations {
+    buildUtils
+    // To workaorund issue on SaaS with openjdk
+    compile.exclude module: 'xml-apis'
+}
+
+dependencies {
+    // providedCompile dependencies are libraries needed to build, but should not be included in the B2 WAR.
+    providedCompile("blackboard.platform:bb-platform:${project.learnVersion}") { transitive = false }
+    providedCompile("blackboard.platform:bb-cms-admin:${project.learnVersion}") { transitive = false }
+    providedCompile("blackboard.platform:bb-taglibs:${project.learnVersion}") { transitive = false }
+
+    // Required to fix java.lang.LinkageError: loader constraint violation: when resolving method
+    // "org.slf4j.impl.StaticLoggerBinder.getLoggerFactory()Lorg/slf4j/ILoggerFactory;"
+    // the class loader (instance of blackboard/tomcat/servletcontainer/PlugInOverrideClassLoader) of
+    // the current class, org/slf4j/LoggerFactory, and the class loader (instance of java/net/URLClassLoader)
+    // for the method's defining class, org/slf4j/impl/StaticLoggerBinder, have different Class objects for
+    // the type org/slf4j/ILoggerFactory used in the signature
+    providedCompile(slf4jAPI)
+
+
+    compile("blackboard.platform:bb-spring-webapi:3000.1.0-rel.52") { transitive = false }
+    compile "org.springframework:spring-webmvc:$project.springVersion",
+            "javax.servlet:servlet-api:2.4",
+            "commons-lang:commons-lang:2.6",
+            "com.googlecode.json-simple:json-simple:1.1",
+            "org.codehaus.jackson:jackson-mapper-asl:1.8.5",
+            "commons-logging:commons-logging:1.1.1",
+            "org.json:json:20090211",
+            "com.google.guava:guava:18.0"
+
+    compile("org.springframework.hateoas:spring-hateoas:0.25.0.RELEASE") { transitive = true }
+
+    //Spring auto convert responsebody object to JSon
+    compile "com.fasterxml.jackson.core:jackson-databind:2.9.7"
+    compile "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:2.9.7"
+
+    compile("org.hibernate:hibernate-core:${project.hibernateVersion}") { transitive = true }
+    compile "org.hibernate:hibernate-entitymanager:${project.hibernateVersion}"
+
+    //Spring Security
+    compile("org.springframework.security:spring-security-config:$project.springVersion")
+    compile("org.springframework.security:spring-security-web:$project.springVersion")
+    compile("org.springframework.security:spring-security-core:$project.springVersion")
+    compile("org.springframework.security:spring-security-crypto:$project.springVersion")
+
+    //CSV processing
+    compile "org.apache.commons:commons-csv:1.4"
+
+    //Apache http
+    compile "org.apache.httpcomponents:httpclient:4.5.3"
+    compile "org.apache.httpcomponents:httpmime:4.5.3"
+
+    runtime "org.javassist:javassist:3.17.1-GA",
+            "dom4j:dom4j:1.6.1"
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
+    buildUtils "org.oscelot:b2deploy-task:0.1.0"
+}
+
+// Add a task to deploy a B2 using starting block
+task deployB2(dependsOn: "war") << {
+    ant.taskdef(name: "b2deploy", classname: "org.oscelot.ant.B2DeployTask", classpath: project.configurations.buildUtils.asPath)
+    //ant.b2deploy(localfilepath: project.war.archivePath, host: System.getProperty("server"), courseorgavailable: 'true', clean: 'true')
+    ant.b2deploy(localfilepath: project.war.archivePath, host: 'http://localhost:9876', courseorgavailable: 'true', clean: 'true')
+}

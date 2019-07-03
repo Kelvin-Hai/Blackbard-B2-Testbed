@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:cache="http://www.springframework.org/schema/cache"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/security
+                           http://www.springframework.org/schema/security/spring-security.xsd
+                           http://www.springframework.org/schema/cache
+                           http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+
+    <security:global-method-security pre-post-annotations="enabled"/>
+
+    <security:http use-expressions="true" entry-point-ref="digestEntryPoint">
+
+        <security:intercept-url pattern='/**' access='isAuthenticated()'/>
+        <security:logout logout-success-url="/"/>
+
+        <security:session-management session-fixation-protection="newSession">
+            <security:concurrency-control max-sessions="1"/>
+        </security:session-management>
+
+        <security:custom-filter ref="digestFilter" after="BASIC_AUTH_FILTER"/>
+    </security:http>
+
+    <security:authentication-manager>
+        <security:authentication-provider>
+            <!--<security:password-encoder ref="passwordEncoder"/>-->
+            <security:password-encoder ref="passwordEncoder"/>
+            <security:user-service id="userService">
+                <security:user name="user"
+                               password="password"
+                               authorities="ROLE_USER"/>
+                <security:user name="admin"
+                               password="admin_password"
+                               authorities="ROLE_ADMIN"/>
+            </security:user-service>
+        </security:authentication-provider>
+    </security:authentication-manager>
+
+
+    <bean id="bCryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder">
+        <constructor-arg name="strength" value="11"/>
+    </bean>
+
+    <!--java.lang.IllegalArgumentException: There is no PasswordEncoder mapped for the id "nul-->
+    <bean id="passwordEncoder" class="org.springframework.security.crypto.password.NoOpPasswordEncoder"
+          factory-method="getInstance"/>
+
+    <bean id="digestFilter" class="org.springframework.security.web.authentication.www.DigestAuthenticationFilter">
+        <property name="userDetailsService" ref="userService"/>
+        <property name="authenticationEntryPoint" ref="digestEntryPoint"/>
+    </bean>
+
+    <bean id="digestEntryPoint"
+          class="org.springframework.security.web.authentication.www.DigestAuthenticationEntryPoint">
+        <property name="realmName" value="Contacts Realm via Digest Authentication"/>
+        <property name="key" value="PrivateKeyValue"/>
+        <property name="nonceValiditySeconds" value="10"/>
+    </bean>
+
+</beans>
